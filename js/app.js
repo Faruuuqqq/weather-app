@@ -1,7 +1,4 @@
-import { fetchWeather } from "./weatherApi";
-
-console.log("App loaded");
-
+import { fetchWeather } from "./weatherApi.js";
 
 class WeatherApp {
   constructor() {
@@ -19,7 +16,7 @@ class WeatherApp {
       this.historyList.addEventListener('click', (e) => this.handleHistoryClick());
 
       const params = new URLSearchParams(window.location.search);
-      const cityFromURL = params.set('city');
+      const cityFromURL = params.get('city');
         if (cityFromURL) {
             this.cityInput.value = cityFromURL;
             this.handleSearch();
@@ -28,18 +25,36 @@ class WeatherApp {
         this.updateHistoryList();
     }
 
+    showError(message) {
+        this.weatherContainer.innerHTML = `
+          <div class="error" style="color: red; padding: 10px; border: 1px solid red;">
+            ⚠️ ${message}
+          </div>`;
+    }
     async handleSearch() {
         const city = this.cityInput.value.trim();
-        if (!city) return;
-
-        const data = await fetchWeather(city);
-        this.displayWeather(data);
-
-        if (data.cod !== '404') {
-            this.addToHistory(city);
-            this.updateURL(city);
+        if (!city) {
+          this.showError("Please enter a city name");
+          return;
         }
-    }
+      
+        try {
+          const data = await fetchWeather(city);
+          
+          if (data.cod && data.cod !== 200 && data.cod !== '200') {
+            this.showError(data.message || "City not found");
+            return;
+          }
+      
+          this.displayWeather(data);
+          this.addToHistory(city);
+          this.updateURL(city);
+          
+        } catch (error) {
+          this.showError("Failed to fetch weather data. Please try again.");
+          console.error("Search error:", error);
+        }
+      }      
 
     displayWeather(data) {
         // TODO: Display weather data
@@ -50,11 +65,11 @@ class WeatherApp {
 
         this.weatherContainer.innerHTML = `
         <h2>${data.name}, ${data.sys.country}</h2>
-        <p> Temperature: ${data.main.temp}°C</p>
-        <p> Weather: ${data.main.weather[0].description}</p>
-        <p> Humidity: ${data.main.humidity}</p>
-        <p> Wind: ${data.main.speed}</p>
-        `;
+        <p>Temperature: ${Math.round(data.main.temp)}°C</p>
+        <p>Weather: ${data.weather[0].description}</p>
+        <p>Humidity: ${data.main.humidity}%</p>
+        <p>Wind: ${data.wind.speed} m/s</p>
+      `;
     }
 
     addToHistory(city) {
@@ -84,7 +99,7 @@ class WeatherApp {
 
     handleHistoryClick(e) {
         // TODO: Handle clicks on history items
-        if (e.target && e.target.matches('li.history.item')) {
+        if (e.target && e.target.matches('li.history-item')) {
             const city = e.target.dataset.city;
             this.cityInput.value = city;
             this.handleSearch();
