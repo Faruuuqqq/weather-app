@@ -1,10 +1,14 @@
-const API_KEY = 'baf008c215b24db8b9a8e7570315f0d2';
-const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
+import { WEATHER_CONFIG } from './config.js';
+
+const API_KEY = import.meta.env.VITE_API_KEY;
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 export async function fetchWeather(city) {
   try {
-    const response = await fetch(`${BASE_URL}?q=${city}&appid=${API_KEY}`);
-    
+    const response = await fetch(
+      `${WEATHER_CONFIG.BASE_URL}?q=${city}&units=metric&appid=${WEATHER_CONFIG.API_KEY}`
+    );
+      
     if (!response.ok) {
       throw new Error('Weather data not found');
     }
