@@ -1,4 +1,6 @@
-const API_KEY = 'baf008c215b24db8b9a8e7570315f0d2';
+import 'dotenv/config';
+
+const API_KEY = process.env.WEATHER_APP_API_KEY;
 const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
 export async function fetchWeather(city) {
