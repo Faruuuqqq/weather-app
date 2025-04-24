@@ -3,6 +3,7 @@
 A simple weather forecast application with real-time data and search history.
 
 ![WeatherPro Screenshot](./preview.png)
+And you can try it here [weather-pro-Netlify](https://faruq-weatherapp.netlify.app/)
 
 ## Features ✨
 
