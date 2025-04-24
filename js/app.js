@@ -13,7 +13,12 @@ class WeatherApp {
 
     init() {
       this.searchBtn.addEventListener('click', () => this.handleSearch());
-      this.historyList.addEventListener('click', (e) => this.handleHistoryClick());
+      this.cityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.handleSearch();
+      });
+      this.historyList.addEventListener('click', (e) => 
+        this.handleHistoryClick());
+
 
       const params = new URLSearchParams(window.location.search);
       const cityFromURL = params.get('city');
@@ -25,12 +30,6 @@ class WeatherApp {
         this.updateHistoryList();
     }
 
-    showError(message) {
-        this.weatherContainer.innerHTML = `
-          <div class="error" style="color: red; padding: 10px; border: 1px solid red;">
-            ⚠️ ${message}
-          </div>`;
-    }
     async handleSearch() {
         const city = this.cityInput.value.trim();
         if (!city) {
@@ -39,9 +38,10 @@ class WeatherApp {
         }
       
         try {
+          this.showLoading();
           const data = await fetchWeather(city);
           
-          if (data.cod && data.cod !== 200 && data.cod !== '200') {
+          if (data.cod && data.cod.toString() !== "200") {
             this.showError(data.message || "City not found");
             return;
           }
@@ -55,20 +55,73 @@ class WeatherApp {
           console.error("Search error:", error);
         }
       }      
+    
+    showError(message) {
+      this.weatherContainer.innerHTML = `
+        <div class="error">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>${message}</span>
+        </div>
+      `;
+    }
+
+    showLoading() {
+      this.weatherContainer.innerHTML = `
+        <div class="weather-card">
+          <div class="weather-header">
+            <h2>Loading...</h2>
+          </div>
+          <div class="weather-body" style="text-align: center; padding: 2rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+          </div>
+        </div>
+      `;
+    }
 
     displayWeather(data) {
-        // TODO: Display weather data
-        if (data.cod === '404') {
-            this.weatherContainer.innerHTML = `<p> ${data.message}</p>`;
-            return;
-        }
+      const date = new Date().toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      
+      const weatherIcon = this.getWeatherIcon(data.weather[0].main);
 
-        this.weatherContainer.innerHTML = `
-        <h2>${data.name}, ${data.sys.country}</h2>
-        <p>Temperature: ${Math.round(data.main.temp)}°C</p>
-        <p>Weather: ${data.weather[0].description}</p>
-        <p>Humidity: ${data.main.humidity}%</p>
-        <p>Wind: ${data.wind.speed} m/s</p>
+      this.weatherContainer.innerHTML = `
+        <div class="weather-card">
+          <div class="weather-header">
+            <h2>${data.name}, ${data.sys.country}</h2>
+            <p>${date}</p>
+          </div>
+          <div class="weather-body">
+            <div class="weather-main">
+              <div>
+                <span class="temperature">${Math.round(data.main.temp)}°C</span>
+                <p>${data.weather[0].description}</p>
+              </div>
+              <i class="weather-icon ${weatherIcon.icon}" style="color: ${weatherIcon.color};"></i>
+            </div>
+            <div class="weather-details">
+              <div class="detail-item">
+                <i class="fas fa-temperature-high"></i>
+                <span>Feels like: ${Math.round(data.main.feels_like)}°C</span>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-tint"></i>
+                <span>Humidity: ${data.main.humidity}%</span>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-wind"></i>
+                <span>Wind: ${data.wind.speed} m/s</span>
+              </div>
+              <div class="detail-item">
+                <i class="fas fa-compress-alt"></i>
+                <span>Pressure: ${data.main.pressure} hPa</span>
+              </div>
+            </div>
+          </div>
+        </div>
       `;
     }
 
@@ -110,6 +163,21 @@ class WeatherApp {
         // TODO: Update URL with the searched city
         const newURL = `${window.location.pathname}?city=${city}`;
         window.history.pushState({ path: newURL }, '', newURL);
+    }
+
+    getWeatherIcon(weatherMain) {
+      const icons = {
+        'Clear': { icon: 'fas fa-sun', color: '#FFD700' },
+        'Clouds': { icon: 'fas fa-cloud', color: '#778899' },
+        'Rain': { icon: 'fas fa-cloud-rain', color: '#4682B4' },
+        'Snow': { icon: 'fas fa-snowflake', color: '#E0FFFF' },
+        'Thunderstorm': { icon: 'fas fa-bolt', color: '#9400D3' },
+        'Drizzle': { icon: 'fas fa-cloud-rain', color: '#87CEEB' },
+        'Mist': { icon: 'fas fa-smog', color: '#D3D3D3' },
+        'default': { icon: 'fas fa-cloud-sun', color: '#4361ee' }
+      };
+    
+      return icons[weatherMain] || icons['default'];
     }
 }
 
